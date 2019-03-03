@@ -9,7 +9,7 @@ extern crate serde_json;
 use failure::Error;
 use futures::{Future, Stream};
 use gotham::handler::{HandlerError, IntoHandlerError};
-use gotham::http::response::create_response;
+use gotham::helpers::http::response::create_response;
 use gotham::state::{FromState, State};
 use hyper::{Body, Response, StatusCode};
 use serde::de::DeserializeOwned;
@@ -49,7 +49,7 @@ impl JSONBody for State {
                     state,
                     HandlerError::with_status(
                         err.compat().into_handler_error(),
-                        StatusCode::UnprocessableEntity,
+                        StatusCode::UNPROCESSABLE_ENTITY,
                     ),
                 )
             });
@@ -62,12 +62,13 @@ pub fn create_json_response<S: Serialize>(
     state: &State,
     status: StatusCode,
     data: &S,
-) -> Result<Response, serde_json::Error> {
+) -> Result<Response<Body>, serde_json::Error> {
     to_string(data).map(|json_str| {
         create_response(
             state,
             status,
-            Some((json_str.into_bytes(), mime::APPLICATION_JSON)),
+            mime::APPLICATION_JSON,
+            json_str.into_bytes(),
         )
     })
 }
